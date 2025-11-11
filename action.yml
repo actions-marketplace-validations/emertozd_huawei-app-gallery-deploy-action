@@ -1,0 +1,45 @@
+name: 'Upload Android Release to Huawei AppGallery'
+description: "An action to upload a signed Android release (.apk or .aab) to Huawei AppGallery"
+author: 'emertozd'
+inputs:
+  client-id:
+    description: "The Client Id generated from Connect API in AppGallery Connect under Users and permissions > Api Key > Connect API"
+    required: true
+  client-key:
+    description: "The Client Key generated from Connect API in AppGallery Connect under Users and permissions > Api Key > Connect API"
+    required: true
+  app-id:
+    description: "The App Id from App Information in AppGallery Connect"
+    required: true
+  file-extension:
+    description: "File name extension (apk/aab)"
+    required: true
+    default: 'apk'
+  file-path:
+    description: "The file path to upload"
+    required: true
+  file-name:
+    description: "Desired file name shown on AppGallery Connect after upload. If not provided, defaults to 'app-release'"
+    required: false
+    default: 'app-release'
+  submit:
+    description: "Whether to submit automatically after upload"
+    required: false
+    default: 'false'
+  debug-logging:
+    description: "Flag to enable verbose log output"
+    required: false
+    default: 'false'
+branding:
+  icon: 'truck'
+  color: 'orange'
+runs:
+  using: 'node20'
+  main: 'lib/index.js'
+outputs:
+  appgallery_console_url:
+    description: "AppGallery console URL for the uploaded app"
+  upload_status:
+    description: "Upload status (success/failed)"
+  errorMessage:
+    description: "The error message if the action failed"

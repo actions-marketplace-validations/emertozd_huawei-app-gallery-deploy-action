@@ -1,0 +1,65 @@
+name: Example AppGallery Deployment
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Huawei App Gallery Deploy
+        id: appgallery
+        uses: ./
+        with:
+          client-id: ${{ secrets.HUAWEI_CLIENT_ID }}
+          client-key: ${{ secrets.HUAWEI_CLIENT_KEY }}
+          app-id: ${{ secrets.HUAWEI_APP_ID }}
+          file-extension: "apk"
+          file-path: "app/build/outputs/apk/release/app-release.apk"
+          file-name: "MyApp-${{ github.ref_name }}-${{ github.sha }}"
+          submit: ${{ github.ref == 'refs/heads/main' }}
+          debug: ${{ secrets.ACTIONS_STEP_DEBUG == 'true' }}
+
+      - name: Print deployment results
+        run: |
+          echo "🎉 Upload Status: ${{ steps.appgallery.outputs.upload_status }}"
+          echo "🔗 AppGallery Console: ${{ steps.appgallery.outputs.appgallery_console_url }}"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ AppGallery deployment failed!"
+          echo "Check the logs above for more details."
